@@ -60,9 +60,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   // Calculate h vector at x_
   MatrixXd h = MatrixXd(3, 1);
-  h(1, 1) = sqrt(x_(1) * x_(1) + x_(2) * x_(2));
-  h(2, 1) = atan2(x_(2), x_(1));
-  h(3, 1) = (x_(1) * x_(3) + x_(2) * x_(4)) / sqrt(x_(1) * x_(1) + x_(2) * x_(2));
+  h(0, 1) = sqrt(x_(0) * x_(0) + x_(1) * x_(1));
+  h(1, 1) = atan2(x_(1), x_(0));
+  h(2, 1) = (x_(0) * x_(2) + x_(1) * x_(3)) / sqrt(x_(0) * x_(0) + x_(1) * x_(1));
 
   MatrixXd y = z - h;
   MatrixXd S = H_ * P_ * H_.transpose() + R_;
