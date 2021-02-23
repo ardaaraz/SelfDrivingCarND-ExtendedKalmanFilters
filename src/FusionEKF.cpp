@@ -45,7 +45,11 @@ FusionEKF::FusionEKF() {
              0, 0,    0, 1000;
 
   // Initialize state transition matrix F
-  ekf_.F_ = MatrixXd::Identity(4, 4);
+  ekf_.F_ = MatrixXd(4, 4);
+  ekf_.F_ << 1, 0, 1, 0,
+             0, 1, 0, 1,
+             0, 0, 1, 0,
+             0, 0, 0, 1;
 
   // Initialize measurement matrix H for laser measurements
   H_laser_ << 1, 0, 0, 0,
@@ -53,6 +57,7 @@ FusionEKF::FusionEKF() {
 
   //Initialize process noise covariance matrix Q
   ekf_.Q_ = MatrixXd::Zero(4, 4);
+  std::cout << "EKF is constructed!" << std::endl;
 }
 
 /**
@@ -96,6 +101,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
+    std::cout << "Initialization is completed!" << std::endl;
     return;
   }
 
@@ -128,7 +134,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
               pow(dt, 3) / 2 * noise_ax, 0                        , pow(dt, 2) * noise_ax    , 0                        ,
               0                        , pow(dt, 3) / 2 * noise_ay, 0                        , pow(dt, 2) * noise_ay    ;
   
+  std::cout << "Q = " << ekf_.Q_ << std::endl;
   ekf_.Predict();
+  std::cout << "Prediction!" << std::endl;
+  std::cout << "Measurement Type = " << measurement_pack.sensor_type_ << std::endl;
 
   /**
    * Update
@@ -144,12 +153,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
     
     // Calculate Jacobian of measurement matrix H
-    tools.CalculateJacobian(measurement_pack.raw_measurements_);
+    tools.CalculateJacobian(ekf_.x_);
+    std::cout << "Jacobian is calculated!" << std::endl;
     // Set measurement matrix H
     ekf_.H_ = Hj_;
     // Set measurement noise covariance matrix R
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
+    std::cout << "Update with Radar Measurement!" << std::endl;
 
   } else {
     // TODO: Laser updates
@@ -160,6 +171,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.R_ = R_laser_;
     // Call update function
     ekf_.Update(measurement_pack.raw_measurements_);
+    std::cout << "Update with Laser Measurement!" << std::endl;
   }
 
   // print the output
