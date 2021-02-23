@@ -47,7 +47,11 @@ FusionEKF::FusionEKF() {
   // Initialize state transition matrix F
   ekf_.F_ = MatrixXd::Identity(4, 4);
 
-  //Initialize process covariance matrix Q
+  // Initialize measurement matrix H for laser measurements
+  H_laser_ << 1, 0, 0, 0,
+              0, 1, 0, 0;
+
+  //Initialize process noise covariance matrix Q
   ekf_.Q_ = MatrixXd::Zero(4, 4);
 }
 
@@ -122,7 +126,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   ekf_.Q_ <<  pow(dt, 4) / 4 * noise_ax, 0                        , pow(dt, 3) / 2 * noise_ax, 0                        ,
               0                        , pow(dt, 4) / 4 * noise_ay, 0                        , pow(dt, 3) / 2 * noise_ay,
               pow(dt, 3) / 2 * noise_ax, 0                        , pow(dt, 2) * noise_ax    , 0                        ,
-              0                        , pow(dt, 3) / 2 * noise_ay, 0                        , pow(dt, 2) * noise_ay;
+              0                        , pow(dt, 3) / 2 * noise_ay, 0                        , pow(dt, 2) * noise_ay    ;
   
   ekf_.Predict();
 
@@ -138,10 +142,30 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
+    
+    // Calculate Jacobian of measurement matrix H
+    float px = measurement_pack.raw_measurements_(0);
+    float py = measurement_pack.raw_measurements_(1);
+    float vx = measurement_pack.raw_measurements_(2);
+    float vy = measurement_pack.raw_measurements_(3);
+    Hj_ << px / sqrt(pow(px, 2) + pow(py, 2))                            , py / sqrt(pow(px, 2) + pow(py, 2))                            , 0                                 , 0                                 , 
+           -py / (pow(px, 2) + pow(py, 2))                               , px / (pow(px, 2) + pow(py, 2))                                , 0                                 , 0                                 ,
+           py * (vx * py - vy * px) / pow((pow(px, 2) + pow(py, 2)), 1.5), px * (vy * px - vx * py) / pow((pow(px, 2) + pow(py, 2)), 1.5), px / sqrt(pow(px, 2) + pow(py, 2)), py / sqrt(pow(px, 2) + pow(py, 2));   
+    // Set measurement matrix H
+    ekf_.H_ = Hj_;
+    // Set measurement noise covariance matrix R
+    ekf_.R_ = R_radar_;
+    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
 
   } else {
     // TODO: Laser updates
-
+    
+    // Set measurement matrix H
+    ekf_.H_ = H_laser_;
+    // Set measurement noise covariance matrix R
+    ekf_.R_ = R_laser_;
+    // Call update function
+    ekf_.Update(measurement_pack.raw_measurements_);
   }
 
   // print the output
