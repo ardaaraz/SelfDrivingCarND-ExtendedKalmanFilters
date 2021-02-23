@@ -144,13 +144,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
     
     // Calculate Jacobian of measurement matrix H
-    float px = measurement_pack.raw_measurements_(0);
-    float py = measurement_pack.raw_measurements_(1);
-    float vx = measurement_pack.raw_measurements_(2);
-    float vy = measurement_pack.raw_measurements_(3);
-    Hj_ << px / sqrt(pow(px, 2) + pow(py, 2))                            , py / sqrt(pow(px, 2) + pow(py, 2))                            , 0                                 , 0                                 , 
-           -py / (pow(px, 2) + pow(py, 2))                               , px / (pow(px, 2) + pow(py, 2))                                , 0                                 , 0                                 ,
-           py * (vx * py - vy * px) / pow((pow(px, 2) + pow(py, 2)), 1.5), px * (vy * px - vx * py) / pow((pow(px, 2) + pow(py, 2)), 1.5), px / sqrt(pow(px, 2) + pow(py, 2)), py / sqrt(pow(px, 2) + pow(py, 2));   
+    tools.CalculateJacobian(measurement_pack.raw_measurements_);
     // Set measurement matrix H
     ekf_.H_ = Hj_;
     // Set measurement noise covariance matrix R
