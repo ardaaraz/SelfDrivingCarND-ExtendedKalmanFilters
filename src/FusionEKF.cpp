@@ -153,7 +153,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
     
     // Calculate Jacobian of measurement matrix H
-    tools.CalculateJacobian(ekf_.x_);
+    Hj_ = tools.CalculateJacobian(ekf_.x_);
     std::cout << "Jacobian is calculated!" << std::endl;
     // Set measurement matrix H
     ekf_.H_ = Hj_;

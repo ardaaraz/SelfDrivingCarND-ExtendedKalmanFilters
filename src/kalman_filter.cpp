@@ -66,21 +66,17 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   h(1, 0) = atan2(x_(1), x_(0));
   h(2, 0) = (x_(0) * x_(2) + x_(1) * x_(3)) / sqrt(x_(0) * x_(0) + x_(1) * x_(1));
 
-  // Assign radar measurement to another variable
-  VectorXd z_prime = z;
-
-  // Normalize radar phi measurement
-  while(z_prime(1) > M_PI)
+  MatrixXd y = z - h;
+  // Normalize y
+  while(y(1) > M_PI)
   {
-    z_prime(1) -= M_PI;
+    y(1) -= M_PI;
   }
 
-  while(z_prime(1) < -M_PI)
+  while(y(1) < -M_PI)
   {
-    z_prime(1) += M_PI;
+    y(1) += M_PI;
   }
-
-  MatrixXd y = z_prime - h;
   MatrixXd S = H_ * P_ * H_.transpose() + R_;
   MatrixXd K = P_ * H_.transpose() * S.inverse();
   x_ = x_ + K * y;
